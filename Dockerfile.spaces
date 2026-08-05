@@ -1,0 +1,29 @@
+# Combined image for Hugging Face Spaces, which exposes exactly one port.
+# Streamlit is the front door on 7860; the API runs alongside on 8000 and is
+# also reachable through Spaces' proxy for /docs.
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    TF_CPP_MIN_LOG_LEVEL=2 \
+    SRP_API_URL=http://localhost:8000 \
+    HOME=/home/appuser
+
+WORKDIR /app
+
+COPY requirements-api.txt requirements-ui.txt ./
+RUN pip install --no-cache-dir -r requirements-api.txt -r requirements-ui.txt
+
+COPY modules/ ./modules/
+COPY api/ ./api/
+COPY models/ ./models/
+COPY app.py .
+
+RUN useradd --create-home --uid 1000 appuser \
+    && mkdir -p /app/logs \
+    && chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 7860
+
+CMD ["sh", "-c", "uvicorn api.main:app --host 0.0.0.0 --port 8000 & exec streamlit run app.py --server.port=7860 --server.address=0.0.0.0 --server.headless=true --browser.gatherUsageStats=false"]

@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check modules api tests app.py save_models.py
+
+      - name: Test
+        env:
+          SRP_RATE_LIMIT: 1000/minute
+        run: pytest
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build API image
+        run: docker build -f Dockerfile.api -t srp-api .
+
+      - name: Build UI image
+        run: docker build -f Dockerfile.ui -t srp-ui .
+
+      - name: Verify API serves predictions in-container
+        run: |
+          docker run -d --name srp-api -p 8000:8000 srp-api
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:8000/health > /dev/null; then break; fi
+            sleep 3
+          done
+          curl -sf http://localhost:8000/health
+          curl -sf http://localhost:8000/models/status | tee /dev/stderr | grep -q '"all_ready":true'
+          docker rm -f srp-api
