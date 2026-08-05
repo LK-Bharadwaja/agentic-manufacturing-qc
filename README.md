@@ -87,15 +87,17 @@ curl -F "file=@part.csv" http://localhost:8000/predict
   "filename": "part.csv",
   "channels_found": ["Channel1 [g]", "Channel2 [g]", "Channel3 [g]"],
   "predictions": [
-    { "model": "MLR", "ra": 2.0841, "available": true, "detail": null },
-    { "model": "Fuzzy Logic", "ra": 2.3511, "available": true, "detail": null },
-    { "model": "CNN", "ra": 2.1907, "available": true, "detail": null }
+    { "model": "MLR", "ra": 2.2472, "available": true, "detail": null },
+    { "model": "Fuzzy Logic", "ra": 2.0627, "available": true, "detail": null },
+    { "model": "CNN", "ra": 2.2242, "available": true, "detail": null }
   ],
-  "spread_um": 0.267,
-  "category": "Average",
-  "latency_ms": 131.4
+  "spread_um": 0.1846,
+  "category": "Smooth",
+  "latency_ms": 173.9
 }
 ```
+
+*(Actual response for a held-out part, served from the container — the three models land within 0.18 µm of each other.)*
 
 ## Tests
 
