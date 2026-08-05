@@ -9,13 +9,14 @@ from modules.config import (
     FUZZY_AVERAGE_MAX,
     FUZZY_BOUNDS_FILE,
     FUZZY_FEATURES,
-    FUZZY_OUTPUT_MAP as OUTPUT_MAP,
+    FUZZY_OUTPUT_MAP,
     FUZZY_SMOOTH_MAX,
 )
 from modules.exceptions import InvalidInputError
 
 logger = logging.getLogger(__name__)
 
+OUTPUT_MAP = FUZZY_OUTPUT_MAP
 LEVELS = ['Low', 'Medium', 'High']
 
 _bounds_cache: dict = {}

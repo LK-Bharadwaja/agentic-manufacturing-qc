@@ -3,7 +3,7 @@
 import json
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pandas as pd
 
@@ -103,7 +103,7 @@ def run_all(features_df: pd.DataFrame, filename: str | None = None) -> dict:
 def _log_prediction(result: dict) -> None:
     """Append one line of prediction telemetry. Never fails the request."""
     record = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "filename": result["filename"],
         "predictions": {p["model"]: p["ra"] for p in result["predictions"]},
         "category": result["category"],

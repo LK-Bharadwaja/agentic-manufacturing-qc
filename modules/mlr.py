@@ -63,6 +63,6 @@ def get_equation() -> str:
     """Return the regression equation string."""
     model, features = _load()
     terms = " + ".join(
-        f"({c:.4f} × {f})" for c, f in zip(model.coef_, features)
+        f"({c:.4f} × {f})" for c, f in zip(model.coef_, features, strict=True)
     )
     return f"Ra = {terms} + {model.intercept_:.4f}"

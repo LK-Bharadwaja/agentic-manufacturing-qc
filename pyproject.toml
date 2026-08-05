@@ -1,0 +1,22 @@
+[project]
+name = "surface-roughness-predictor"
+version = "1.0.0"
+description = "Predicts machined-part surface roughness from 3-axis vibration signals"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --cov=modules --cov=api --cov-report=term-missing"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.coverage.run]
+omit = ["tests/*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = ["legacy"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]

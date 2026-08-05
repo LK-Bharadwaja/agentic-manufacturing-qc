@@ -1,6 +1,5 @@
 """Pydantic request/response models — these drive the Swagger docs at /docs."""
 
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -9,25 +8,25 @@ from modules.feature_extraction import FEATURE_NAMES
 
 class ModelPrediction(BaseModel):
     model: str = Field(..., description="Model name", examples=["MLR"])
-    ra: Optional[float] = Field(
+    ra: float | None = Field(
         None, description="Predicted surface roughness in µm", examples=[2.31]
     )
     available: bool = Field(..., description="Whether this model could run")
-    detail: Optional[str] = Field(
+    detail: str | None = Field(
         None, description="Why the model was unavailable, if it was"
     )
 
 
 class PredictionResponse(BaseModel):
-    filename: Optional[str] = Field(None, description="Uploaded file name, if any")
+    filename: str | None = Field(None, description="Uploaded file name, if any")
     channels_found: list[str] = Field(
         ..., description="Expected channel columns present in the input"
     )
     predictions: list[ModelPrediction]
-    spread_um: Optional[float] = Field(
+    spread_um: float | None = Field(
         None, description="Max minus min Ra across models that produced a value"
     )
-    category: Optional[str] = Field(
+    category: str | None = Field(
         None, description="Surface quality band from the fuzzy prediction"
     )
     features: dict[str, float] = Field(
@@ -49,7 +48,7 @@ class FeaturesRequest(BaseModel):
 class ModelStatus(BaseModel):
     model: str
     ready: bool
-    detail: Optional[str] = None
+    detail: str | None = None
 
 
 class ModelsStatusResponse(BaseModel):

@@ -3,9 +3,9 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from scipy.fftpack import fft
-from scipy.stats import kurtosis, entropy
 import scipy.signal as sp_signal
+from scipy.fftpack import fft
+from scipy.stats import entropy, kurtosis
 
 from modules.config import (
     CHANNELS,
@@ -25,6 +25,7 @@ __all__ = [
     "SAMPLING_RATE",
     "STFT_WINDOW",
     "WINDOW_SIZE",
+    "available_channels",
     "extract_features_from_df",
     "extract_features_from_file",
 ]

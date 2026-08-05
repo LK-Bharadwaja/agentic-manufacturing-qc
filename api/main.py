@@ -125,7 +125,7 @@ def _read_upload(filename: str, raw: bytes) -> pd.DataFrame:
     responses={400: {"model": ErrorResponse}, 429: {"model": ErrorResponse}},
 )
 @limiter.limit(RATE_LIMIT)
-async def predict(request: Request, file: UploadFile = File(...)):
+async def predict(request: Request, file: UploadFile = File(...)):  # noqa: B008 — FastAPI idiom
     """Upload a vibration signal file and get Ra predictions from all three models."""
     raw = await file.read()
     df = _read_upload(file.filename or "upload", raw)

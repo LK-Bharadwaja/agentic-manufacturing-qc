@@ -10,17 +10,18 @@ Run from the project directory:
 """
 
 import os
-import sys
 import pickle
-import zipfile
+import sys
 import warnings
+import zipfile
+from itertools import combinations
+
 import numpy as np
 import pandas as pd
-from itertools import combinations
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import r2_score
 import statsmodels.api as sm
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score
+from sklearn.preprocessing import MinMaxScaler
 
 warnings.filterwarnings("ignore")
 
@@ -28,11 +29,11 @@ warnings.filterwarnings("ignore")
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, PROJECT_DIR)
 
-from modules.feature_extraction import (
-    extract_features_from_file,
+from modules.feature_extraction import (  # noqa: E402 — needs PROJECT_DIR on sys.path
     FEATURE_NAMES,
+    extract_features_from_file,
 )
-from modules.fuzzy_logic import FUZZY_FEATURES
+from modules.fuzzy_logic import FUZZY_FEATURES  # noqa: E402
 
 MODELS_DIR = os.path.join(PROJECT_DIR, 'models')
 PARTS_ZIP = os.path.join(PROJECT_DIR, 'parts.zip')
@@ -135,13 +136,13 @@ def train_mlr(features_df: pd.DataFrame, y_train: list) -> list:
             if best not in top12:
                 top12.append(best)
 
-    print(f"  Top-12 selected features:")
+    print("  Top-12 selected features:")
     for f in top12:
         print(f"    {f}  (R²={r2_map.get(f, 0):.4f})")
 
     # Exhaustive 4-feature combination search
     print(f"\n  Searching all C({len(top12)},4) = {len(list(combinations(top12, 4)))} combinations...")
-    best_combo, best_acc, best_r2, best_model, best_pred = None, 0.0, 0.0, None, None
+    best_combo, best_acc, best_r2, best_model = None, 0.0, 0.0, None
 
     for combo in combinations(top12, 4):
         X = features_df[list(combo)].values
@@ -150,14 +151,14 @@ def train_mlr(features_df: pd.DataFrame, y_train: list) -> list:
         acc = _custom_accuracy(Y, yp)
         r2 = r2_score(Y, yp)
         if acc > best_acc:
-            best_acc, best_r2, best_combo, best_model, best_pred = acc, r2, combo, m, yp
+            best_acc, best_r2, best_combo, best_model = acc, r2, combo, m
 
     print(f"\n  Best 4-feature combination: {best_combo}")
     print(f"  Custom accuracy: {best_acc:.2f}%  |  R²: {best_r2:.4f}")
 
     # Build equation string
     terms = "  +  ".join(
-        f"({c:.4f} × {f})" for c, f in zip(best_model.coef_, best_combo)
+        f"({c:.4f} × {f})" for c, f in zip(best_model.coef_, best_combo, strict=True)
     )
     print(f"  Equation: Ra = {terms} + {best_model.intercept_:.4f}")
 
@@ -167,7 +168,7 @@ def train_mlr(features_df: pd.DataFrame, y_train: list) -> list:
         pickle.dump(best_model, f)
     with open(os.path.join(MODELS_DIR, 'mlr_features.pkl'), 'wb') as f:
         pickle.dump(list(best_combo), f)
-    print(f"  Saved: models/mlr_model.pkl  +  models/mlr_features.pkl")
+    print("  Saved: models/mlr_model.pkl  +  models/mlr_features.pkl")
     return list(best_combo)
 
 
@@ -200,8 +201,8 @@ def train_cnn(features_df: pd.DataFrame, y_train: list):
     _banner("Step 5 — CNN: training Conv1D model (300 epochs)")
     try:
         import tensorflow as tf
+        from tensorflow.keras.layers import Conv1D, Dense, Dropout, Flatten
         from tensorflow.keras.models import Sequential
-        from tensorflow.keras.layers import Conv1D, Flatten, Dense, Dropout
     except ImportError:
         print("  WARNING: TensorFlow not installed — skipping CNN training.")
         print("  Install with:  pip install tensorflow")
