@@ -1,0 +1,24 @@
+{
+  "trained_at": "2026-08-05T18:31:17.743331+00:00",
+  "training_parts": 27,
+  "models": {
+    "MLR": {
+      "accuracy_pct": 92.25,
+      "r2": 0.4644,
+      "features_used": 4,
+      "notes": "Best 4-feature combination of 12 group representatives"
+    },
+    "Fuzzy Logic": {
+      "accuracy_pct": 90.25,
+      "r2": 0.1755,
+      "features_used": 4,
+      "notes": "81-rule Mamdani system, centroid defuzzification"
+    },
+    "CNN": {
+      "accuracy_pct": 96.77,
+      "r2": 0.8953,
+      "features_used": 36,
+      "notes": "Conv1D(32) \u2192 Dropout(0.2) \u2192 Dense(16) \u2192 Dense(1), 300 epochs"
+    }
+  }
+}

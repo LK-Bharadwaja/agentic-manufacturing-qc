@@ -9,11 +9,13 @@ Run from the project directory:
     python save_models.py
 """
 
+import json
 import os
 import pickle
 import sys
 import warnings
 import zipfile
+from datetime import UTC, datetime
 from itertools import combinations
 
 import numpy as np
@@ -169,7 +171,12 @@ def train_mlr(features_df: pd.DataFrame, y_train: list) -> list:
     with open(os.path.join(MODELS_DIR, 'mlr_features.pkl'), 'wb') as f:
         pickle.dump(list(best_combo), f)
     print("  Saved: models/mlr_model.pkl  +  models/mlr_features.pkl")
-    return list(best_combo)
+    return {
+        'accuracy_pct': round(best_acc, 2),
+        'r2': round(best_r2, 4),
+        'features_used': len(best_combo),
+        'notes': f"Best 4-feature combination of {len(top12)} group representatives",
+    }
 
 
 # ── Step 4: Fuzzy logic bounds ───────────────────────────────────────────────
@@ -195,6 +202,25 @@ def save_fuzzy_bounds(features_df: pd.DataFrame):
     print("  Saved: models/fuzzy_bounds.pkl")
 
 
+def evaluate_fuzzy(features_df: pd.DataFrame, y_train: list) -> dict:
+    """Score the fuzzy system on the training set using the bounds just written."""
+    import modules.fuzzy_logic as fuzzy_module
+
+    fuzzy_module._bounds_cache.clear()
+    preds = [
+        fuzzy_module.predict(features_df.iloc[[i]]) for i in range(len(features_df))
+    ]
+    acc = _custom_accuracy(y_train, preds)
+    r2 = r2_score(y_train, preds)
+    print(f"  Fuzzy custom accuracy: {acc:.2f}%  |  R²: {r2:.4f}")
+    return {
+        'accuracy_pct': round(acc, 2),
+        'r2': round(r2, 4),
+        'features_used': len(FUZZY_FEATURES),
+        'notes': '81-rule Mamdani system, centroid defuzzification',
+    }
+
+
 # ── Step 5: CNN training ──────────────────────────────────────────────────────
 
 def train_cnn(features_df: pd.DataFrame, y_train: list):
@@ -206,7 +232,7 @@ def train_cnn(features_df: pd.DataFrame, y_train: list):
     except ImportError:
         print("  WARNING: TensorFlow not installed — skipping CNN training.")
         print("  Install with:  pip install tensorflow")
-        return
+        return None
 
     X = features_df[FEATURE_NAMES].values.astype(float)
     Y = np.array(y_train, dtype=float)
@@ -242,6 +268,12 @@ def train_cnn(features_df: pd.DataFrame, y_train: list):
     with open(os.path.join(MODELS_DIR, 'cnn_scaler.pkl'), 'wb') as f:
         pickle.dump(scaler, f)
     print("  Saved: models/cnn_model.keras  +  models/cnn_scaler.pkl")
+    return {
+        'accuracy_pct': round(acc, 2),
+        'r2': round(r2, 4),
+        'features_used': len(FEATURE_NAMES),
+        'notes': 'Conv1D(32) → Dropout(0.2) → Dense(16) → Dense(1), 300 epochs',
+    }
 
 
 # ── Main ─────────────────────────────────────────────────────────────────────
@@ -260,9 +292,22 @@ def main():
     features_df = build_training_features(parts_dir)
     y_train = Y_TRAIN[:len(features_df)]
 
-    train_mlr(features_df, y_train)
+    metrics = {'MLR': train_mlr(features_df, y_train)}
     save_fuzzy_bounds(features_df)
-    train_cnn(features_df, y_train)
+    metrics['Fuzzy Logic'] = evaluate_fuzzy(features_df, y_train)
+    cnn_metrics = train_cnn(features_df, y_train)
+    if cnn_metrics:
+        metrics['CNN'] = cnn_metrics
+
+    _banner("Step 6 — Writing models/metrics.json")
+    payload = {
+        'trained_at': datetime.now(UTC).isoformat(),
+        'training_parts': len(features_df),
+        'models': metrics,
+    }
+    with open(os.path.join(MODELS_DIR, 'metrics.json'), 'w', encoding='utf-8') as f:
+        json.dump(payload, f, indent=2)
+    print("  Saved: models/metrics.json")
 
     _banner("All models saved successfully!")
     print(f"  Output directory: {MODELS_DIR}")
