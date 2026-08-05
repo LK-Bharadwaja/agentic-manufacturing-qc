@@ -1,39 +1,39 @@
-import os
+import logging
 import pickle
-import numpy as np
+
 import pandas as pd
 
-_MODELS_DIR = os.path.join(os.path.dirname(__file__), '..', 'models')
-_MODEL_FILE = os.path.join(_MODELS_DIR, 'mlr_model.pkl')
-_FEATS_FILE = os.path.join(_MODELS_DIR, 'mlr_features.pkl')
+from modules.config import MLR_FEATURES_FILE, MLR_MODEL_FILE
+from modules.exceptions import InvalidInputError, ModelNotAvailableError
+
+logger = logging.getLogger(__name__)
 
 # Cached after first load
 _cache: dict = {}
+
+
+def is_available() -> bool:
+    """Return True if the MLR artifacts exist on disk."""
+    return MLR_MODEL_FILE.exists() and MLR_FEATURES_FILE.exists()
 
 
 def _load():
     if _cache:
         return _cache['model'], _cache['features']
 
-    model_path = os.path.abspath(_MODEL_FILE)
-    feats_path = os.path.abspath(_FEATS_FILE)
+    for path, label in ((MLR_MODEL_FILE, 'model'), (MLR_FEATURES_FILE, 'feature list')):
+        if not path.exists():
+            raise ModelNotAvailableError(
+                'MLR',
+                f"{label} not found at {path} — run 'python save_models.py' to train it",
+            )
 
-    if not os.path.exists(model_path):
-        raise FileNotFoundError(
-            f"MLR model not found at:\n  {model_path}\n\n"
-            "Run  python save_models.py  from the project directory to train and save it."
-        )
-    if not os.path.exists(feats_path):
-        raise FileNotFoundError(
-            f"MLR feature list not found at:\n  {feats_path}\n\n"
-            "Run  python save_models.py  to regenerate it."
-        )
-
-    with open(model_path, 'rb') as f:
+    with open(MLR_MODEL_FILE, 'rb') as f:
         model = pickle.load(f)
-    with open(feats_path, 'rb') as f:
+    with open(MLR_FEATURES_FILE, 'rb') as f:
         features = pickle.load(f)
 
+    logger.info("Loaded MLR model with %d features", len(features))
     _cache['model'] = model
     _cache['features'] = features
     return model, features
@@ -45,8 +45,8 @@ def predict(features_df: pd.DataFrame) -> float:
 
     missing = [c for c in best_features if c not in features_df.columns]
     if missing:
-        raise ValueError(
-            f"Input DataFrame is missing {len(missing)} required column(s): {missing}"
+        raise InvalidInputError(
+            f"Input is missing {len(missing)} required feature column(s): {missing}"
         )
 
     X = features_df[best_features].values.reshape(1, -1)

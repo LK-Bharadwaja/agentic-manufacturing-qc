@@ -1,31 +1,47 @@
 import itertools
-import os
+import logging
 import pickle
-import warnings
+
 import numpy as np
 import pandas as pd
 
-FUZZY_FEATURES = [
-    'Channel 2 RMS',
-    'Channel 2 PEAK',
-    'Channel 2 KURTOSIS',
-    'Channel 2 PSD',
-]
-LEVELS = ['Low', 'Medium', 'High']
-OUTPUT_MAP = {'Smooth': 1.9970, 'Average': 2.3511, 'Rough': 2.7480}
+from modules.config import (
+    FUZZY_AVERAGE_MAX,
+    FUZZY_BOUNDS_FILE,
+    FUZZY_FEATURES,
+    FUZZY_OUTPUT_MAP as OUTPUT_MAP,
+    FUZZY_SMOOTH_MAX,
+)
+from modules.exceptions import InvalidInputError
 
-_BOUNDS_FILE = os.path.join(os.path.dirname(__file__), '..', 'models', 'fuzzy_bounds.pkl')
+logger = logging.getLogger(__name__)
+
+LEVELS = ['Low', 'Medium', 'High']
+
 _bounds_cache: dict = {}
+
+
+def is_available() -> bool:
+    """Return True if trained membership bounds exist (fallback MFs work without them)."""
+    return FUZZY_BOUNDS_FILE.exists()
+
+
+def categorize(ra: float) -> str:
+    """Map a predicted Ra to its surface quality category."""
+    if ra < FUZZY_SMOOTH_MAX:
+        return 'Smooth'
+    if ra < FUZZY_AVERAGE_MAX:
+        return 'Average'
+    return 'Rough'
 
 
 def _load_bounds() -> dict:
     if _bounds_cache:
         return _bounds_cache
-    path = os.path.abspath(_BOUNDS_FILE)
-    if os.path.exists(path):
-        with open(path, 'rb') as f:
-            data = pickle.load(f)
-        _bounds_cache.update(data)
+    if FUZZY_BOUNDS_FILE.exists():
+        with open(FUZZY_BOUNDS_FILE, 'rb') as f:
+            _bounds_cache.update(pickle.load(f))
+        logger.info("Loaded fuzzy bounds for %d features", len(_bounds_cache))
     return _bounds_cache
 
 
@@ -50,11 +66,10 @@ def _mf_params(bounds: dict, feat: str, val: float) -> dict:
             'High':   (b['mean'], b['max'],  b['max']),
         }
     # Fallback: symmetric around the observed value — outputs 'Average'
-    warnings.warn(
-        f"No training bounds found for '{feat}'. "
-        "Using symmetric fallback MFs — run save_models.py for accurate predictions.",
-        UserWarning,
-        stacklevel=4,
+    logger.warning(
+        "No training bounds for '%s'; using symmetric fallback MFs. "
+        "Run save_models.py for accurate predictions.",
+        feat,
     )
     return {
         'Low':    (val * 0.50, val * 0.50, val),
@@ -87,7 +102,7 @@ def predict(features_df: pd.DataFrame) -> float:
     """
     missing = [c for c in FUZZY_FEATURES if c not in features_df.columns]
     if missing:
-        raise ValueError(f"Missing columns for fuzzy prediction: {missing}")
+        raise InvalidInputError(f"Missing columns for fuzzy prediction: {missing}")
 
     bounds = _load_bounds()
     row = features_df.iloc[0]

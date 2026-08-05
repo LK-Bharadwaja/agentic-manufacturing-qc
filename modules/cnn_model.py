@@ -1,13 +1,13 @@
-import os
+import logging
 import pickle
-import numpy as np
+
 import pandas as pd
 
+from modules.config import CNN_MODEL_FILE, CNN_SCALER_FILE
+from modules.exceptions import InvalidInputError, ModelNotAvailableError
 from modules.feature_extraction import FEATURE_NAMES
 
-_MODELS_DIR = os.path.join(os.path.dirname(__file__), '..', 'models')
-_MODEL_FILE = os.path.join(_MODELS_DIR, 'cnn_model.keras')
-_SCALER_FILE = os.path.join(_MODELS_DIR, 'cnn_scaler.pkl')
+logger = logging.getLogger(__name__)
 
 _cache: dict = {}
 
@@ -25,30 +25,24 @@ def _load():
         return _cache['model'], _cache['scaler']
 
     if not _tensorflow_available():
-        raise ImportError(
-            "TensorFlow is not installed. Install it with:\n  pip install tensorflow"
+        raise ModelNotAvailableError(
+            'CNN', 'TensorFlow is not installed — pip install tensorflow'
         )
 
-    model_path = os.path.abspath(_MODEL_FILE)
-    scaler_path = os.path.abspath(_SCALER_FILE)
-
-    if not os.path.exists(model_path):
-        raise FileNotFoundError(
-            f"CNN model not found at:\n  {model_path}\n\n"
-            "Run  python save_models.py  from the project directory to train and save it."
-        )
-    if not os.path.exists(scaler_path):
-        raise FileNotFoundError(
-            f"CNN scaler not found at:\n  {scaler_path}\n\n"
-            "Run  python save_models.py  to regenerate it."
-        )
+    for path, label in ((CNN_MODEL_FILE, 'model'), (CNN_SCALER_FILE, 'scaler')):
+        if not path.exists():
+            raise ModelNotAvailableError(
+                'CNN',
+                f"{label} not found at {path} — run 'python save_models.py' to train it",
+            )
 
     import tensorflow as tf
-    model = tf.keras.models.load_model(model_path)
+    model = tf.keras.models.load_model(CNN_MODEL_FILE)
 
-    with open(scaler_path, 'rb') as f:
+    with open(CNN_SCALER_FILE, 'rb') as f:
         scaler = pickle.load(f)
 
+    logger.info("Loaded CNN model from %s", CNN_MODEL_FILE)
     _cache['model'] = model
     _cache['scaler'] = scaler
     return model, scaler
@@ -58,8 +52,8 @@ def is_available() -> bool:
     """Return True if the CNN model files exist and TensorFlow is installed."""
     return (
         _tensorflow_available()
-        and os.path.exists(os.path.abspath(_MODEL_FILE))
-        and os.path.exists(os.path.abspath(_SCALER_FILE))
+        and CNN_MODEL_FILE.exists()
+        and CNN_SCALER_FILE.exists()
     )
 
 
@@ -73,8 +67,8 @@ def predict(features_df: pd.DataFrame) -> float:
 
     missing = [c for c in FEATURE_NAMES if c not in features_df.columns]
     if missing:
-        raise ValueError(
-            f"Input DataFrame is missing {len(missing)} required column(s): {missing}"
+        raise InvalidInputError(
+            f"Input is missing {len(missing)} required feature column(s): {missing}"
         )
 
     X = features_df[FEATURE_NAMES].values          # (1, 36)

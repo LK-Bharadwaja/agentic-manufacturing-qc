@@ -1,16 +1,33 @@
+import logging
+import warnings
+
 import numpy as np
 import pandas as pd
 from scipy.fftpack import fft
 from scipy.stats import kurtosis, entropy
 import scipy.signal as sp_signal
-import warnings
 
-SAMPLING_RATE = 50000
-WINDOW_SIZE = SAMPLING_RATE // 50       # 1000 samples per window
-OVERLAP = WINDOW_SIZE // 2              # 500 samples
-STFT_WINDOW = WINDOW_SIZE // 2          # 500
+from modules.config import (
+    CHANNELS,
+    OVERLAP,
+    SAMPLING_RATE,
+    STFT_WINDOW,
+    WINDOW_SIZE,
+)
+from modules.exceptions import InvalidInputError, MissingChannelError
 
-CHANNELS = ['Channel1 [g]', 'Channel2 [g]', 'Channel3 [g]']
+logger = logging.getLogger(__name__)
+
+__all__ = [
+    "CHANNELS",
+    "FEATURE_NAMES",
+    "OVERLAP",
+    "SAMPLING_RATE",
+    "STFT_WINDOW",
+    "WINDOW_SIZE",
+    "extract_features_from_df",
+    "extract_features_from_file",
+]
 
 FEATURE_NAMES = []
 for _ch in range(1, 4):
@@ -107,7 +124,7 @@ def _zero_row(ch_num: int, reason: str) -> dict:
                  "Dominant Frequency", "Total Energy", "Spectral Entropy",
                  "STFT Centroid", "STFT Bandwidth", "STFT Entropy", "STFT Kurtosis"]:
         row[f"Channel {ch_num} {feat}"] = 0.0
-    warnings.warn(f"Channel {ch_num} ({reason}) — filled with zeros.", UserWarning, stacklevel=3)
+    logger.warning("Channel %d (%s) — filled with zeros.", ch_num, reason)
     return row
 
 
@@ -138,8 +155,20 @@ def _extract_channel(df: pd.DataFrame, ch_idx: int) -> dict:
     }
 
 
+def available_channels(df: pd.DataFrame) -> list:
+    """Return the expected channel columns actually present in the DataFrame."""
+    return [ch for ch in CHANNELS if ch in df.columns]
+
+
 def extract_features_from_df(df: pd.DataFrame) -> pd.DataFrame:
-    """Extract 36 vibration features from an already-loaded DataFrame."""
+    """Extract 36 vibration features from an already-loaded DataFrame.
+
+    Channels that are absent are zero-filled, but a file with no recognised
+    channel at all is rejected rather than silently scored on all-zero input.
+    """
+    if not available_channels(df):
+        raise MissingChannelError(CHANNELS, list(df.columns))
+
     row = {}
     for ch_idx in range(3):
         row.update(_extract_channel(df, ch_idx))
@@ -154,7 +183,7 @@ def extract_features_from_file(file_path: str) -> pd.DataFrame:
     elif path.lower().endswith(('.xlsx', '.xls')):
         df = pd.read_excel(path)
     else:
-        raise ValueError(
+        raise InvalidInputError(
             f"Unsupported file format: '{path}'. Expected .xlsx, .xls, or .csv."
         )
     return extract_features_from_df(df)
