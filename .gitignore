@@ -1,0 +1,33 @@
+# Large training data — kept local, models ship pre-trained
+parts.zip
+extracted_parts/
+
+# Academic deliverables and media
+*.pptx
+*.docx
+*.pdf
+*.mp4
+~$*
+
+# Spreadsheets (testdata.csv is the tracked sample input)
+*.xlsx
+*.xls
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+
+# Runtime
+*.log
+.env
+logs/
+
+# Local tooling
+.claude/settings.local.json
