@@ -38,8 +38,8 @@ from modules.feature_extraction import (  # noqa: E402 — needs PROJECT_DIR on 
 from modules.fuzzy_logic import FUZZY_FEATURES  # noqa: E402
 
 MODELS_DIR = os.path.join(PROJECT_DIR, 'models')
-PARTS_ZIP = os.path.join(PROJECT_DIR, 'parts.zip')
-PARTS_DIR = os.path.join(PROJECT_DIR, 'extracted_parts')
+PARTS_ZIP = os.path.join(PROJECT_DIR, 'data', 'parts.zip')
+PARTS_DIR = os.path.join(PROJECT_DIR, 'data', 'parts')
 
 # Ground-truth Ra values for parts 1-27 (training)
 Y_TRAIN = [
@@ -73,12 +73,12 @@ def _custom_accuracy(y_true, y_pred) -> float:
 
 def find_parts_dir() -> str:
     """Return directory where part xlsx files live, extracting zip if needed."""
-    # Check if files are already in project root
-    if os.path.exists(os.path.join(PROJECT_DIR, 'part 1.xlsx')):
-        return PROJECT_DIR
-    # Check previously extracted dir
+    # Check data/parts/ first (normal location after restructure)
     if os.path.exists(os.path.join(PARTS_DIR, 'part 1.xlsx')):
         return PARTS_DIR
+    # Fallback: files extracted directly to project root (legacy layout)
+    if os.path.exists(os.path.join(PROJECT_DIR, 'part 1.xlsx')):
+        return PROJECT_DIR
     # Extract from zip
     if not os.path.exists(PARTS_ZIP):
         raise FileNotFoundError(

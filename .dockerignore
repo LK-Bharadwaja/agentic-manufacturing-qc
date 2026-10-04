@@ -1,4 +1,6 @@
 .git
+.env
+.env.*
 .github
 legacy
 tests
@@ -20,3 +22,9 @@ logs
 *.mp4
 *.xlsx
 *.xls
+
+# RAG source documents must still reach the API build context — the api
+# image parses these at startup to build the Chroma index (rag/document_loader.py).
+!docs/**/*.docx
+!docs/**/*.pdf
+!docs/**/*.md

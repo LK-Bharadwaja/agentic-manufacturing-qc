@@ -11,8 +11,8 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 
-COPY requirements-api.txt requirements-ui.txt ./
-RUN pip install --no-cache-dir -r requirements-api.txt -r requirements-ui.txt
+COPY requirements-api.txt requirements-ui.txt requirements-agent.txt ./
+RUN pip install --no-cache-dir -r requirements-api.txt -r requirements-ui.txt -r requirements-agent.txt
 
 COPY modules/ ./modules/
 COPY api/ ./api/

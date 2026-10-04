@@ -2,18 +2,21 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: docker/Dockerfile.api
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     environment:
       SRP_RATE_LIMIT: "30/minute"
     volumes:
       - prediction-logs:/app/logs
+      - chroma-db:/app/chroma_db
 
   ui:
     build:
       context: .
-      dockerfile: Dockerfile.ui
+      dockerfile: docker/Dockerfile.ui
     ports:
       - "8501:8501"
     environment:
@@ -24,3 +27,4 @@ services:
 
 volumes:
   prediction-logs:
+  chroma-db:

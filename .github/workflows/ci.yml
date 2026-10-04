@@ -17,14 +17,15 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements-dev.txt
+        run: pip install -r requirements-dev.txt -r requirements-agent.txt
 
       - name: Lint
-        run: ruff check modules api tests app.py save_models.py
+        run: ruff check .
 
       - name: Test
         env:
           SRP_RATE_LIMIT: 1000/minute
+          # Deliberately no ANTHROPIC_API_KEY / GOOGLE_API_KEY: tests must not call LLMs.
         run: pytest
 
   docker:
@@ -33,10 +34,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build API image
-        run: docker build -f Dockerfile.api -t srp-api .
+        run: docker build -f docker/Dockerfile.api -t srp-api .
 
       - name: Build UI image
-        run: docker build -f Dockerfile.ui -t srp-ui .
+        run: docker build -f docker/Dockerfile.ui -t srp-ui .
 
       - name: Verify API serves predictions in-container
         run: |

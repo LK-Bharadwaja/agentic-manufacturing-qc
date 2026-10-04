@@ -1,6 +1,8 @@
 """Pydantic request/response models — these drive the Swagger docs at /docs."""
 
 
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 from modules.feature_extraction import FEATURE_NAMES
@@ -64,3 +66,40 @@ class HealthResponse(BaseModel):
 class ErrorResponse(BaseModel):
     error: str
     detail: str
+
+
+class ToolCallLog(BaseModel):
+    tool: str = Field(..., description="Name of the tool the agent invoked")
+    input: dict[str, Any] = Field(..., description="Arguments the agent passed")
+    output: str = Field(..., description="The tool's return value")
+    reasoning: str | None = Field(
+        None, description="The agent's own text preceding this call, if any"
+    )
+
+
+class AgentPredictResponse(BaseModel):
+    filename: str | None = Field(None, description="Uploaded file name, if any")
+    ra: float | None = Field(
+        None, description="The agent's final trusted Ra (µm), parsed from its report"
+    )
+    models_used: list[str] = Field(
+        ..., description="Prediction tool names the agent called, in call order"
+    )
+    tool_calls: list[ToolCallLog] = Field(
+        ..., description="Full reasoning trace: every tool call the agent made"
+    )
+    noise_level: str | None = Field(
+        None, description="Raw get_signal_noise_level output, if the agent called it"
+    )
+    report: str = Field(..., description="The agent's final free-text QC report")
+    rag_consulted: bool = Field(..., description="Whether the agent called query_rag")
+
+
+class RagAskRequest(BaseModel):
+    question: str = Field(..., description="A question about the project methodology")
+
+
+class RagAskResponse(BaseModel):
+    answer: str
+    sources: list[str]
+    grounded: bool

@@ -1,6 +1,6 @@
 # Large training data — kept local, models ship pre-trained
-parts.zip
-extracted_parts/
+data/parts.zip
+data/parts/
 
 # Academic deliverables and media
 *.pptx
@@ -31,3 +31,6 @@ logs/
 
 # Local tooling
 .claude/settings.local.json
+
+# Generated RAG vector index (rebuilt from docs/ by rag/vector_store.py)
+chroma_db/

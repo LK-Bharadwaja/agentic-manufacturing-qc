@@ -45,6 +45,14 @@ FUZZY_OUTPUT_MAP = {"Smooth": 1.9970, "Average": 2.3511, "Rough": 2.7480}
 FUZZY_SMOOTH_MAX = 2.175
 FUZZY_AVERAGE_MAX = 2.55
 
+# ── Training data range ────────────────────────────────────────────────────────
+# Ground-truth Ra range across the 27 training parts (min/max of Y_TRAIN in
+# save_models.py). None of the three models have seen a genuine example outside
+# this range, so a prediction outside it is an extrapolation, not an
+# interpolation, regardless of that model's training-set R².
+TRAINING_RA_MIN = 1.931
+TRAINING_RA_MAX = 2.812
+
 # ── API ───────────────────────────────────────────────────────────────────────
 MAX_UPLOAD_BYTES = _env_int("SRP_MAX_UPLOAD_BYTES", 50 * 1024 * 1024)
 ALLOWED_UPLOAD_SUFFIXES = {".csv", ".xlsx", ".xls"}
