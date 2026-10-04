@@ -90,7 +90,7 @@ Then:
 docker compose up
 ```
 
-That's the whole setup. UI at <http://localhost:8501>, Swagger at <http://localhost:8000/docs>. Models ship pre-trained in `models/`, so there's no training step. On first startup the API container also builds the RAG index from `docs/` into a persistent `chroma_db` volume — a few extra seconds once, not on every restart.
+That's the whole setup. UI at <http://localhost:8501>, Swagger at <http://localhost:8000/docs>. A sample input is included at `data/sample/part_28.xlsx` — upload it in the dashboard to try all three tabs. Models ship pre-trained in `models/`, so there's no training step. On first startup the API container also builds the RAG index from `docs/` into a persistent `chroma_db` volume — a few extra seconds once, not on every restart.
 
 <details>
 <summary>Running without Docker</summary>

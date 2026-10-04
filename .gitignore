@@ -8,10 +8,16 @@ data/parts/
 *.pdf
 *.mp4
 ~$*
+# RAG source documents (indexed by rag/document_loader.py) stay tracked
+!docs/*.docx
+!docs/reports/*.docx
+!docs/reports/*.pdf
 
 # Spreadsheets (testdata.csv is the tracked sample input)
 *.xlsx
 *.xls
+# Sample input for trying the dashboard after cloning
+!data/sample/*.xlsx
 
 # Python
 __pycache__/
