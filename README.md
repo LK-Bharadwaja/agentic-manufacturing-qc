@@ -160,7 +160,7 @@ Requires `parts.zip` (~110 MB of raw captures, not in the repo). Writes all mode
 
 **Why ship pre-trained models in git?** The artifacts total ~250 KB. Committing them makes `docker compose up` work from a clean clone with no training step and no model-registry dependency. The 110 MB of raw training data stays out of the repo.
 
-**Why pinned scikit-learn and TensorFlow?** The `.pkl` estimators and the `.keras` artifact are sensitive to major-version drift. CI builds the image and asserts `/models/status` reports all three models loaded, so a dependency bump that silently breaks unpickling fails the build rather than production.
+**Why pinned scikit-learn?** The `.pkl` estimators are sensitive to version drift: loading them under a different scikit-learn raises `InconsistentVersionWarning` and can break. `requirements-api.txt` pins `scikit-learn==1.8.0`, the version that wrote them. TensorFlow is only range-pinned (`>=2.21,<3.0`; the `.keras` artifact was saved under 2.20 locally), so the CNN is guarded by a check rather than an exact pin: CI builds the image and asserts `/models/status` reports all three models loaded, and the sample part returns the expected CNN prediction (2.5995 µm for part 28).
 
 **What's deliberately not here:** no auth, no relational database (the only store is the Chroma vector index), no model registry, no Kubernetes, no metrics backend. This is a single-user demo service with a fixed model set — each of those would add real operational surface for no benefit at this scope. The retraining pipeline stays a manual script because the dataset is fixed at 27 parts.
 

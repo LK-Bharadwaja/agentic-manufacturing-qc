@@ -5,8 +5,10 @@ slowapi>=0.1.9
 pandas>=2.0
 numpy>=1.26
 scipy>=1.10
-# Pinned to the versions that produced models/ — pickled estimators and the
-# .keras artifact are sensitive to major version drift.
-scikit-learn>=1.8,<2.0
+# scikit-learn is pinned exactly to the version that pickled models/*.pkl
+# (save_models.py environment); unpickling under another version warns and
+# can break. TensorFlow is only range-pinned: the .keras artifact is verified
+# by the prediction check in the README/tests rather than by an exact pin.
+scikit-learn==1.8.0
 openpyxl>=3.1
 tensorflow>=2.21,<3.0
