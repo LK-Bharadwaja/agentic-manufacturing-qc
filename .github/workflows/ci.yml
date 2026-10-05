@@ -39,6 +39,18 @@ jobs:
       - name: Build UI image
         run: docker build -f docker/Dockerfile.ui -t srp-ui .
 
+      - name: Verify UI app imports and renders in-container
+        # AppTest executes app.py (API unreachable is fine: the app shows its
+        # "cannot reach API" state). Catches import errors the Streamlit health
+        # endpoint cannot, e.g. a module missing from the slim UI image.
+        run: |
+          docker run --rm srp-ui python -c "
+          from streamlit.testing.v1 import AppTest
+          at = AppTest.from_file('/app/app.py', default_timeout=60).run()
+          assert not at.exception, [e.value for e in at.exception]
+          print('UI AppTest OK')
+          "
+
       - name: Verify API serves predictions in-container
         run: |
           docker run -d --name srp-api -p 8000:8000 srp-api
