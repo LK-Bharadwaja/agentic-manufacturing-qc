@@ -40,3 +40,5 @@ logs/
 
 # Generated RAG vector index (rebuilt from docs/ by rag/vector_store.py)
 chroma_db/
+
+.claude/
