@@ -14,6 +14,8 @@ import streamlit as st
 from modules.config import TRAINING_RA_MAX, TRAINING_RA_MIN
 
 API_URL = os.getenv("SRP_API_URL", "http://localhost:8000").rstrip("/")
+# Browser-facing address for links; API_URL may be an internal Docker hostname.
+PUBLIC_API_URL = os.getenv("SRP_PUBLIC_API_URL", "http://localhost:8000").rstrip("/")
 REQUEST_TIMEOUT = int(os.getenv("SRP_REQUEST_TIMEOUT", "120"))
 RA_TOLERANCE_UM = 2.3
 
@@ -197,7 +199,7 @@ with st.sidebar:
         "- `Channel2 [g]`\n"
         "- `Channel3 [g]`"
     )
-    st.caption(f"API docs: {API_URL}/docs")
+    st.caption(f"API docs: {PUBLIC_API_URL}/docs")
 
 if status is None:
     st.error(
