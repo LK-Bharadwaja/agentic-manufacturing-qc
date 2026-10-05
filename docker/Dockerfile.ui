@@ -9,6 +9,10 @@ COPY requirements-ui.txt .
 RUN pip install --no-cache-dir -r requirements-ui.txt
 
 COPY app.py .
+# Only the dependency-free config module (stdlib imports only), so the UI shares
+# the API's TRAINING_RA_MIN/MAX without pulling in TensorFlow or any model code.
+COPY modules/__init__.py ./modules/__init__.py
+COPY modules/config.py ./modules/config.py
 COPY models/metrics.json ./models/metrics.json
 
 RUN useradd --create-home --uid 1000 appuser && chown -R appuser:appuser /app
