@@ -138,7 +138,11 @@ curl -F "file=@part.csv" http://localhost:8000/predict
 pytest
 ```
 
-39 tests, 59% overall line coverage (`pytest --cov`). The core modules (feature extraction, MLR, fuzzy, CNN, API schemas/service) sit at 73-100%; the LLM agent and RAG modules are lower (24-33%) because exercising them requires live API keys. Feature extraction is verified against **analytically known values** — a 2.0-amplitude sine wave must produce RMS = 2/√2 and crest factor = √2, and a 1 kHz tone must be recovered as the dominant frequency — rather than against golden outputs that would just re-encode whatever the code currently does.
+39 tests. **87% coverage on `modules/` and `api/`** — that is what CI measures, via the `addopts` in `pyproject.toml`.
+
+`agent/` and `rag/` are only lightly covered by automated tests (24 to 33%, mocked unit tests only), because exercising them needs live Claude and Gemini calls. Their behavior was verified through manual end-to-end runs and tool-call traces instead (see [docs/ENGINEERING_NOTES.md](docs/ENGINEERING_NOTES.md)).
+
+Feature extraction is verified against **analytically known values** — a 2.0-amplitude sine wave must produce RMS = 2/√2 and crest factor = √2, and a 1 kHz tone must be recovered as the dominant frequency — rather than against golden outputs that would just re-encode whatever the code currently does.
 
 ## Retraining
 
