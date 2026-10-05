@@ -26,9 +26,12 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
 
-# Rebuild the Chroma index from docs/ on every start rather than shipping a
-# baked-in chroma_db/ — build_index() is idempotent (skips if /app/chroma_db
-# already has data), so this is a no-op after the first start as long as
-# chroma_db is on a persistent volume (see docker-compose.yml). Needs
-# GOOGLE_API_KEY at container start, same as any /rag/ask request.
-CMD ["sh", "-c", "python -m rag.vector_store && exec uvicorn api.main:app --host 0.0.0.0 --port 8000"]
+# Try to build the Chroma index from docs/ on every start rather than shipping
+# a baked-in chroma_db/ — build_index() is idempotent (skips if /app/chroma_db
+# already has data), so this is a no-op after the first successful build as
+# long as chroma_db is on a persistent volume (see docker-compose.yml). The
+# build needs GOOGLE_API_KEY (Gemini embeddings). If it fails, the API still
+# starts: /health, /models/status and /predict don't need the index, and
+# /rag/ask answers with a clean 502 until an index exists. A keyless start
+# leaves an empty collection, which the next start with a key will fill.
+CMD ["sh", "-c", "python -m rag.vector_store || echo 'WARNING: RAG index was NOT built (likely a missing or invalid GOOGLE_API_KEY). Starting the API anyway; /rag/ask and the agent query_rag tool will return errors until the index is built.' >&2; exec uvicorn api.main:app --host 0.0.0.0 --port 8000"]

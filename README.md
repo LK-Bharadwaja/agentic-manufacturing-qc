@@ -74,7 +74,7 @@ The UI holds no business logic — it renders whatever the API returns. That spl
 
 ## Quickstart
 
-First, create a `.env` file in the project root with both API keys — the agent and RAG generation need `ANTHROPIC_API_KEY`, the RAG embeddings need `GOOGLE_API_KEY`; `docker compose` reads this file directly (`env_file: .env` on the `api` service), and the container won't start cleanly without it:
+The API starts without any keys: `/predict`, `/models/status` and `/health` work with the shipped models. Two features need keys: `/rag/ask` and `/agent/predict` need `ANTHROPIC_API_KEY` (agent and RAG generation) and `GOOGLE_API_KEY` (RAG embeddings). The RAG index is only built at container start when `GOOGLE_API_KEY` is present; without it the container logs a warning, and `/rag/ask` returns a `502` until you restart with the key. `docker compose` reads a `.env` file in the project root (`env_file: .env` on the `api` service), so create one, even an empty one, before `docker compose up`:
 
 ```bash
 GOOGLE_API_KEY=AIza...
@@ -87,7 +87,7 @@ Then:
 docker compose up
 ```
 
-That's the whole setup. UI at <http://localhost:8501>, Swagger at <http://localhost:8000/docs>. A sample input is included at `data/sample/part_28.xlsx` — upload it in the dashboard to try all three tabs. Models ship pre-trained in `models/`, so there's no training step. On first startup the API container also builds the RAG index from `docs/` into a persistent `chroma_db` volume — a few extra seconds once, not on every restart.
+That's the whole setup. UI at <http://localhost:8501>, Swagger at <http://localhost:8000/docs>. A sample input is included at `data/sample/part_28.xlsx` — upload it in the dashboard to try all three tabs. Models ship pre-trained in `models/`, so there's no training step. On first startup with `GOOGLE_API_KEY` set, the API container also builds the RAG index from `docs/` into a persistent `chroma_db` volume — a few extra seconds once, not on every restart.
 
 <details>
 <summary>Running without Docker</summary>
